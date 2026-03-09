@@ -6,6 +6,7 @@ import {
   Target,
   DollarSign,
   Zap,
+  Send,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -28,6 +29,7 @@ const navItems = [
   { title: "Atendimento", url: "/atendimento", icon: Headphones },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Leads Qualificados", url: "/leads", icon: Target },
+  { title: "Gestão de Envios", url: "/envios", icon: Send },
   { title: "Faturamento", url: "/faturamento", icon: DollarSign },
 ];
 
