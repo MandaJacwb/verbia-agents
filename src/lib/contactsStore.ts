@@ -22,6 +22,10 @@ export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
   "NOVO": { bg: "hsl(160, 70%, 45%)", text: "hsl(0, 0%, 100%)" },
   "INATIVO": { bg: "hsl(160, 10%, 30%)", text: "hsl(150, 10%, 70%)" },
   "LEAD QUALIFICADO": { bg: "hsl(45, 100%, 50%)", text: "hsl(0, 0%, 10%)" },
+  "WHATSAPP": { bg: "hsl(120, 100%, 62%)", text: "hsl(160, 10%, 6%)" },
+  "INSTAGRAM": { bg: "hsl(340, 75%, 55%)", text: "hsl(0, 0%, 100%)" },
+  "MESSENGER": { bg: "hsl(200, 80%, 55%)", text: "hsl(0, 0%, 100%)" },
+  "SITE": { bg: "hsl(160, 70%, 45%)", text: "hsl(0, 0%, 100%)" },
 };
 
 const contacts: Contact[] = [
@@ -56,15 +60,32 @@ export function getContacts(): Contact[] {
   return [...contacts];
 }
 
-export function addContact(contact: Omit<Contact, "id" | "createdAt">) {
+export type ChannelOrigin = "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "SITE";
+
+export function addContact(contact: Omit<Contact, "id" | "createdAt">, channel?: ChannelOrigin) {
+  const tags = [...(contact.tags || [])];
+  if (channel && !tags.includes(channel)) {
+    tags.push(channel);
+  }
   const newContact: Contact = {
     ...contact,
+    tags,
     id: `c${Date.now()}`,
     createdAt: new Date(),
   };
   contacts.push(newContact);
   notify();
   return newContact;
+}
+
+export function addChannelTag(contactId: string, channel: ChannelOrigin) {
+  const idx = contacts.findIndex((c) => c.id === contactId);
+  if (idx >= 0 && !contacts[idx].tags.includes(channel)) {
+    contacts[idx] = { ...contacts[idx], tags: [...contacts[idx].tags, channel] };
+    notify();
+    return contacts[idx];
+  }
+  return idx >= 0 ? contacts[idx] : undefined;
 }
 
 export function updateContact(id: string, data: Partial<Omit<Contact, "id" | "createdAt">>) {
