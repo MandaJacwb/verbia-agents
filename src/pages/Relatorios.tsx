@@ -324,14 +324,14 @@ export default function Relatorios() {
                         <Cell key={idx} fill={entry.fill} />
                       ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(160,12%,9%)",
-                      border: "1px solid hsl(160,10%,18%)",
-                      borderRadius: "8px",
-                      color: "hsl(150,20%,95%)",
-                    }}
-                  />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
+                        borderRadius: "8px",
+                        color: chart.tooltipText,
+                      }}
+                    />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
