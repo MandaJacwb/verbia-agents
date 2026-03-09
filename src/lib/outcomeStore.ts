@@ -10,6 +10,7 @@ export interface Outcome {
   conversationId: string;
   outcome: OutcomeType;
   reason?: string;
+  opportunityValue?: number;
   timestamp: Date;
 }
 
@@ -33,8 +34,8 @@ const outcomeColors: Record<OutcomeType, string> = {
 
 // Pre-populated mock data
 const outcomes: Outcome[] = [
-  { conversationId: "a1", outcome: "venda", timestamp: new Date("2026-03-01") },
-  { conversationId: "a2", outcome: "venda", timestamp: new Date("2026-03-02") },
+  { conversationId: "a1", outcome: "venda", opportunityValue: 2500, timestamp: new Date("2026-03-01") },
+  { conversationId: "a2", outcome: "venda", opportunityValue: 8000, timestamp: new Date("2026-03-02") },
   { conversationId: "a3", outcome: "agendamento", timestamp: new Date("2026-03-01") },
   { conversationId: "a4", outcome: "agendamento", timestamp: new Date("2026-03-03") },
   { conversationId: "a5", outcome: "agendamento", timestamp: new Date("2026-03-04") },
@@ -96,6 +97,12 @@ export function getOutcomeCounts(): { name: string; value: number; fill: string;
 
 export function getOutcomeForConversation(conversationId: string): Outcome | undefined {
   return outcomes.find((o) => o.conversationId === conversationId);
+}
+
+export function getConvertedROI(): number {
+  return outcomes
+    .filter((o) => o.outcome === "venda" || o.outcome === "agendamento")
+    .reduce((sum, o) => sum + (o.opportunityValue || 0), 0);
 }
 
 export { outcomeLabels, outcomeColors };
