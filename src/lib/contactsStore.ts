@@ -60,15 +60,32 @@ export function getContacts(): Contact[] {
   return [...contacts];
 }
 
-export function addContact(contact: Omit<Contact, "id" | "createdAt">) {
+export type ChannelOrigin = "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "SITE";
+
+export function addContact(contact: Omit<Contact, "id" | "createdAt">, channel?: ChannelOrigin) {
+  const tags = [...(contact.tags || [])];
+  if (channel && !tags.includes(channel)) {
+    tags.push(channel);
+  }
   const newContact: Contact = {
     ...contact,
+    tags,
     id: `c${Date.now()}`,
     createdAt: new Date(),
   };
   contacts.push(newContact);
   notify();
   return newContact;
+}
+
+export function addChannelTag(contactId: string, channel: ChannelOrigin) {
+  const idx = contacts.findIndex((c) => c.id === contactId);
+  if (idx >= 0 && !contacts[idx].tags.includes(channel)) {
+    contacts[idx] = { ...contacts[idx], tags: [...contacts[idx].tags, channel] };
+    notify();
+    return contacts[idx];
+  }
+  return idx >= 0 ? contacts[idx] : undefined;
 }
 
 export function updateContact(id: string, data: Partial<Omit<Contact, "id" | "createdAt">>) {
