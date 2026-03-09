@@ -256,26 +256,34 @@ export default function Contatos() {
             <DialogTitle>Novo Contato</DialogTitle>
             <DialogDescription>Preencha os dados do contato para cadastro rápido.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Nome *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Telefone *</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+55 11 99999-9999" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Telefone *</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+55 11 99999-9999" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Instagram</Label>
-              <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Empresa</Label>
+              <Input value={form.empresa} onChange={(e) => setForm({ ...form, empresa: e.target.value })} placeholder="Nome da empresa" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>E-mail</Label>
-              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">E-mail</Label>
+              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Etiquetas</Label>
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="VIP, ESTÉTICA (separar por vírgula)" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Instagram</Label>
+              <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" className="h-9 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Valor da Oportunidade</Label>
+              <Input type="number" value={form.opportunityValue} onChange={(e) => setForm({ ...form, opportunityValue: e.target.value })} placeholder="R$ 0,00" className="h-9 text-sm" />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-xs">Etiquetas</Label>
+              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="VIP, ESTÉTICA (separar por vírgula)" className="h-9 text-sm" />
             </div>
           </div>
           <DialogFooter>
