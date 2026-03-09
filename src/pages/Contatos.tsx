@@ -64,9 +64,11 @@ export default function Contatos() {
       phone: form.phone,
       instagram: form.instagram || undefined,
       email: form.email || undefined,
+      empresa: form.empresa || undefined,
+      opportunityValue: form.opportunityValue ? parseFloat(form.opportunityValue) : undefined,
       tags: form.tags ? form.tags.split(",").map((t) => t.trim().toUpperCase()) : [],
     });
-    setForm({ name: "", phone: "", instagram: "", email: "", tags: "" });
+    setForm({ name: "", phone: "", instagram: "", email: "", empresa: "", opportunityValue: "", tags: "" });
     setNewOpen(false);
     toast({ title: "Contato adicionado com sucesso!" });
   };
