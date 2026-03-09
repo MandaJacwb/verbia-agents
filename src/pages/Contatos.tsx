@@ -28,7 +28,7 @@ export default function Contatos() {
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newOpen, setNewOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", instagram: "", email: "", tags: "" });
+  const [form, setForm] = useState({ name: "", phone: "", instagram: "", email: "", empresa: "", opportunityValue: "", tags: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
