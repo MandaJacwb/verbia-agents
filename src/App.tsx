@@ -15,6 +15,7 @@ import Envios from "./pages/Envios";
 import ModelosMensagem from "./pages/ModelosMensagem";
 import Relatorios from "./pages/Relatorios";
 import Contatos from "./pages/Contatos";
+import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -10,9 +10,11 @@ import {
   FileText,
   BarChart3,
   Users,
+  UserCog,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { getCurrentUser } from "@/lib/usersStore";
 import {
   Sidebar,
   SidebarContent,
@@ -26,23 +28,26 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Meus Agentes", url: "/agentes", icon: Bot },
-  { title: "Atendimento", url: "/atendimento", icon: Headphones },
-  { title: "Integrações", url: "/integracoes", icon: Link2 },
-  { title: "Leads Qualificados", url: "/leads", icon: Target },
-  { title: "Gestão de Envios", url: "/envios", icon: Send },
-  { title: "Modelos de Mensagem", url: "/modelos", icon: FileText },
-  { title: "Contatos", url: "/contatos", icon: Users },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
-  { title: "Faturamento", url: "/faturamento", icon: DollarSign },
+const allNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["admin_conta", "admin"] },
+  { title: "Meus Agentes", url: "/agentes", icon: Bot, roles: ["admin_conta", "admin"] },
+  { title: "Atendimento", url: "/atendimento", icon: Headphones, roles: ["admin_conta", "admin", "atendente"] },
+  { title: "Integrações", url: "/integracoes", icon: Link2, roles: ["admin_conta", "admin"] },
+  { title: "Leads Qualificados", url: "/leads", icon: Target, roles: ["admin_conta", "admin"] },
+  { title: "Gestão de Envios", url: "/envios", icon: Send, roles: ["admin_conta", "admin"] },
+  { title: "Modelos de Mensagem", url: "/modelos", icon: FileText, roles: ["admin_conta", "admin"] },
+  { title: "Contatos", url: "/contatos", icon: Users, roles: ["admin_conta", "admin", "atendente"] },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["admin_conta", "admin"] },
+  { title: "Faturamento", url: "/faturamento", icon: DollarSign, roles: ["admin_conta"] },
+  { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["admin_conta", "admin"] },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const currentUser = getCurrentUser();
+  const navItems = allNavItems.filter((item) => item.roles.includes(currentUser.role));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
