@@ -13,6 +13,7 @@ import Faturamento from "./pages/Faturamento";
 import Atendimento from "./pages/Atendimento";
 import Envios from "./pages/Envios";
 import ModelosMensagem from "./pages/ModelosMensagem";
+import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
