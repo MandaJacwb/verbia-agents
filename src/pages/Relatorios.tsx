@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useChartColors } from "@/hooks/useChartColors";
 import {
   BarChart3,
   Clock,
