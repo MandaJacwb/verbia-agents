@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Bot,
+  Headphones,
   Link2,
   Target,
   DollarSign,
