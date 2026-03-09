@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Bot,
+  Headphones,
   Link2,
   Target,
   DollarSign,
@@ -24,6 +25,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Meus Agentes", url: "/agentes", icon: Bot },
+  { title: "Atendimento", url: "/atendimento", icon: Headphones },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Leads Qualificados", url: "/leads", icon: Target },
   { title: "Faturamento", url: "/faturamento", icon: DollarSign },

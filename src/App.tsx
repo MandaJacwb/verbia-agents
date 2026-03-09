@@ -10,6 +10,7 @@ import AgentConfig from "./pages/AgentConfig";
 import Integracoes from "./pages/Integracoes";
 import Leads from "./pages/Leads";
 import Faturamento from "./pages/Faturamento";
+import Atendimento from "./pages/Atendimento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/agentes" element={<Agentes />} />
             <Route path="/agentes/novo" element={<AgentConfig />} />
             <Route path="/agentes/:id" element={<AgentConfig />} />
+            <Route path="/atendimento" element={<Atendimento />} />
             <Route path="/integracoes" element={<Integracoes />} />
             <Route path="/leads" element={<Leads />} />
             <Route path="/faturamento" element={<Faturamento />} />
