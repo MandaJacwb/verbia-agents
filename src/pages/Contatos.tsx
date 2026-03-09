@@ -208,8 +208,12 @@ export default function Contatos() {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">{c.phone}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{c.empresa || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{c.instagram || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{c.email || "—"}</TableCell>
+                  <TableCell className="text-sm font-mono text-primary">
+                    {c.opportunityValue ? `R$ ${c.opportunityValue.toLocaleString("pt-BR")}` : "—"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1.5">
                       {c.tags.map((tag) => (
