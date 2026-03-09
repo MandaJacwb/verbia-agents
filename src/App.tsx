@@ -17,6 +17,7 @@ import ModelosMensagem from "./pages/ModelosMensagem";
 import Relatorios from "./pages/Relatorios";
 import Contatos from "./pages/Contatos";
 import Usuarios from "./pages/Usuarios";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
