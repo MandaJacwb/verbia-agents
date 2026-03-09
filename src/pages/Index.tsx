@@ -28,6 +28,7 @@ const recentInteractions = [
 
 const Dashboard = () => {
   const [convertedROI, setConvertedROI] = useState(getConvertedROI());
+  const chart = useChartColors();
 
   useEffect(() => {
     return subscribeOutcomes(() => setConvertedROI(getConvertedROI()));
