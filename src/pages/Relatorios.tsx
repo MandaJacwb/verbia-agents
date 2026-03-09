@@ -31,7 +31,10 @@ import {
   Cell,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
 } from "recharts";
+import { getOutcomeCounts } from "@/lib/outcomeStore";
 
 // ── Mock Data ──────────────────────────────────────────────
 
@@ -291,9 +294,48 @@ export default function Relatorios() {
               </div>
             </CardContent>
           </Card>
+          {/* Loss Reasons Pie Chart */}
+          <Card className="glass-card neon-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Motivos de Perda / Desfecho
+              </CardTitle>
+              <CardDescription>Distribuição dos resultados de atendimento</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={getOutcomeCounts().filter((d) => d.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={110}
+                    paddingAngle={3}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {getOutcomeCounts()
+                      .filter((d) => d.value > 0)
+                      .map((entry, idx) => (
+                        <Cell key={idx} fill={entry.fill} />
+                      ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(160,12%,9%)",
+                      border: "1px solid hsl(160,10%,18%)",
+                      borderRadius: "8px",
+                      color: "hsl(150,20%,95%)",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </TabsContent>
-
-        {/* ── Tab: Heatmap ───────────────────────────── */}
         <TabsContent value="heatmap" className="mt-4">
           <Card className="glass-card neon-border">
             <CardHeader>
