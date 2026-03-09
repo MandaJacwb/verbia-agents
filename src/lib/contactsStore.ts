@@ -22,6 +22,10 @@ export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
   "NOVO": { bg: "hsl(160, 70%, 45%)", text: "hsl(0, 0%, 100%)" },
   "INATIVO": { bg: "hsl(160, 10%, 30%)", text: "hsl(150, 10%, 70%)" },
   "LEAD QUALIFICADO": { bg: "hsl(45, 100%, 50%)", text: "hsl(0, 0%, 10%)" },
+  "WHATSAPP": { bg: "hsl(120, 100%, 62%)", text: "hsl(160, 10%, 6%)" },
+  "INSTAGRAM": { bg: "hsl(340, 75%, 55%)", text: "hsl(0, 0%, 100%)" },
+  "MESSENGER": { bg: "hsl(200, 80%, 55%)", text: "hsl(0, 0%, 100%)" },
+  "SITE": { bg: "hsl(160, 70%, 45%)", text: "hsl(0, 0%, 100%)" },
 };
 
 const contacts: Contact[] = [
