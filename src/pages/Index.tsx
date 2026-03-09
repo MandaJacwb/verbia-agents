@@ -88,19 +88,19 @@ const Dashboard = () => {
                     <stop offset="95%" stopColor="hsl(120, 100%, 62%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(160, 10%, 18%)" />
-                <XAxis dataKey="name" stroke="hsl(150, 10%, 55%)" fontSize={12} />
-                <YAxis stroke="hsl(150, 10%, 55%)" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                <XAxis dataKey="name" stroke={chart.axis} fontSize={12} />
+                <YAxis stroke={chart.axis} fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(160, 12%, 9%)",
-                    border: "1px solid hsl(120, 100%, 62%, 0.3)",
+                    backgroundColor: chart.tooltipBg,
+                    border: `1px solid ${chart.tooltipBorder}`,
                     borderRadius: "8px",
-                    color: "hsl(150, 20%, 95%)",
+                    color: chart.tooltipText,
                   }}
                 />
-                <Area type="monotone" dataKey="conversoes" stroke="hsl(120, 100%, 62%)" fillOpacity={1} fill="url(#colorConversoes)" strokeWidth={2} />
-                <Area type="monotone" dataKey="leads" stroke="hsl(160, 70%, 45%)" fillOpacity={0.1} fill="hsl(160, 70%, 45%)" strokeWidth={2} />
+                <Area type="monotone" dataKey="conversoes" stroke={chart.primary} fillOpacity={1} fill="url(#colorConversoes)" strokeWidth={2} />
+                <Area type="monotone" dataKey="leads" stroke={chart.secondary} fillOpacity={0.1} fill={chart.secondary} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
