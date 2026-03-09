@@ -12,6 +12,7 @@ import Leads from "./pages/Leads";
 import Faturamento from "./pages/Faturamento";
 import Atendimento from "./pages/Atendimento";
 import Envios from "./pages/Envios";
+import ModelosMensagem from "./pages/ModelosMensagem";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
