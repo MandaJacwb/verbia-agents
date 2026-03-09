@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useChartColors } from "@/hooks/useChartColors";
 import {
   BarChart3,
   Clock,
@@ -109,7 +110,7 @@ function getHeatColor(value: number) {
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("overview");
-
+  const chart = useChartColors();
   const totalConversas = 2480;
   const tempoHumanoMin = totalConversas * 5;
   const tempoHumanoH = Math.round(tempoHumanoMin / 60);
@@ -236,15 +237,15 @@ export default function Relatorios() {
               <CardContent className="h-[340px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={volumeByHour}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(160,10%,18%)" />
-                    <XAxis dataKey="hour" stroke="hsl(150,10%,55%)" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="hsl(150,10%,55%)" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="hour" stroke={chart.axis} tick={{ fontSize: 11 }} />
+                    <YAxis stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(160,12%,9%)",
-                        border: "1px solid hsl(160,10%,18%)",
+                        backgroundColor: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: "8px",
-                        color: "hsl(150,20%,95%)",
+                        color: chart.tooltipText,
                       }}
                     />
                     <Area
@@ -323,14 +324,14 @@ export default function Relatorios() {
                         <Cell key={idx} fill={entry.fill} />
                       ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(160,12%,9%)",
-                      border: "1px solid hsl(160,10%,18%)",
-                      borderRadius: "8px",
-                      color: "hsl(150,20%,95%)",
-                    }}
-                  />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
+                        borderRadius: "8px",
+                        color: chart.tooltipText,
+                      }}
+                    />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
