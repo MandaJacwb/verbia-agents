@@ -19,6 +19,7 @@ import Contatos from "./pages/Contatos";
 import Usuarios from "./pages/Usuarios";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
               <Route path="/agentes" element={<Agentes />} />
