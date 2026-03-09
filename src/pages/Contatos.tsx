@@ -180,8 +180,10 @@ export default function Contatos() {
             <TableRow className="border-b border-border/50 hover:bg-transparent">
               <TableHead className="w-[280px]">Contato</TableHead>
               <TableHead>Telefone</TableHead>
+              <TableHead>Empresa</TableHead>
               <TableHead>Instagram</TableHead>
               <TableHead>E-mail</TableHead>
+              <TableHead>Oportunidade</TableHead>
               <TableHead>Etiquetas</TableHead>
             </TableRow>
           </TableHeader>
