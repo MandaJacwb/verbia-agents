@@ -31,7 +31,10 @@ import {
   Cell,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
 } from "recharts";
+import { getOutcomeCounts } from "@/lib/outcomeStore";
 
 // ── Mock Data ──────────────────────────────────────────────
 
