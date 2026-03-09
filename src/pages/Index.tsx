@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Calendar, Flame, TrendingUp, Bot } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getConvertedROI, subscribe as subscribeOutcomes } from "@/lib/outcomeStore";
+import { useChartColors } from "@/hooks/useChartColors";
 
 const baseROI = 45200;
 
