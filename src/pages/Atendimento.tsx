@@ -1,4 +1,4 @@
-import { useState, DragEvent } from "react";
+import { useState, DragEvent, useEffect } from "react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -14,6 +14,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Bot,
   User,
   Headphones,
@@ -26,7 +33,20 @@ import {
   Brain,
   CalendarDays,
   ListTodo,
+  XCircle,
+  ShoppingCart,
+  CalendarCheck,
+  PhoneOff,
+  ThumbsDown,
+  DollarSign,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  addOutcome,
+  getOutcomeForConversation,
+  type OutcomeType,
+  outcomeLabels,
+} from "@/lib/outcomeStore";
 
 // ── Mock Data ──────────────────────────────────────────────────────
 
@@ -106,7 +126,6 @@ const messagesMap: Record<string, Message[]> = {
   ],
 };
 
-// Default messages for conversations without specific mock data
 const defaultMessages: Message[] = [
   { id: "m1", sender: "cliente", text: "Olá, preciso de ajuda.", time: "14:00" },
   { id: "m2", sender: "ia", text: "Claro! Como posso te ajudar hoje?", time: "14:00" },
@@ -180,6 +199,36 @@ const senderConfig: Record<MsgSender, { label: string; bubble: string; icon: typ
   },
 };
 
+// ── Outcome helpers ────────────────────────────────────────────────
+
+type LeadStatus = "aberto" | "efetivado" | "perdido" | "sem_resposta";
+
+function getLeadStatus(conversationId: string): LeadStatus {
+  const outcome = getOutcomeForConversation(conversationId);
+  if (!outcome) return "aberto";
+  if (outcome.outcome === "venda" || outcome.outcome === "agendamento") return "efetivado";
+  if (outcome.outcome === "sem_resposta") return "sem_resposta";
+  return "perdido";
+}
+
+const statusConfig: Record<LeadStatus, { label: string; class: string }> = {
+  aberto: { label: "Em Aberto", class: "bg-muted text-muted-foreground border-border" },
+  efetivado: { label: "Efetivado", class: "bg-primary/20 text-primary border-primary/30" },
+  perdido: { label: "Perdido", class: "bg-destructive/20 text-destructive border-destructive/30" },
+  sem_resposta: { label: "Sem Resposta", class: "bg-chart-3/20 text-chart-3 border-chart-3/30" },
+};
+
+// ── Outcome buttons config ─────────────────────────────────────────
+
+const outcomeButtons: { type: OutcomeType; icon: typeof ShoppingCart; color: string }[] = [
+  { type: "venda", icon: ShoppingCart, color: "bg-primary/15 hover:bg-primary/25 text-primary border-primary/30" },
+  { type: "agendamento", icon: CalendarCheck, color: "bg-chart-2/15 hover:bg-chart-2/25 text-chart-2 border-chart-2/30" },
+  { type: "sem_resposta", icon: PhoneOff, color: "bg-chart-3/15 hover:bg-chart-3/25 text-chart-3 border-chart-3/30" },
+  { type: "desinteresse", icon: ThumbsDown, color: "bg-destructive/15 hover:bg-destructive/25 text-destructive border-destructive/30" },
+  { type: "preco", icon: DollarSign, color: "bg-chart-5/15 hover:bg-chart-5/25 text-chart-5 border-chart-5/30" },
+  { type: "outros", icon: MoreHorizontal, color: "bg-muted hover:bg-muted/80 text-foreground border-border" },
+];
+
 // ── Component ──────────────────────────────────────────────────────
 
 export default function Atendimento() {
@@ -191,10 +240,17 @@ export default function Atendimento() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
+  // Closure modal state
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closureReason, setClosureReason] = useState("");
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [, forceRender] = useState(0);
+
   const selected = conversations.find((c) => c.id === selectedId)!;
   const messages = messagesMap[selectedId] ?? defaultMessages;
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
+  const leadStatus = getLeadStatus(selectedId);
 
   // Drag handlers
   const onDragStart = (e: DragEvent, taskId: string) => {
@@ -208,6 +264,43 @@ export default function Atendimento() {
       prev.map((t) => (t.id === draggedTaskId ? { ...t, status: targetStatus } : t))
     );
     setDraggedTaskId(null);
+  };
+
+  const handleOutcome = (type: OutcomeType) => {
+    if (type === "outros") {
+      setShowOtherInput(true);
+      return;
+    }
+    commitOutcome(type);
+  };
+
+  const commitOutcome = (type: OutcomeType, reason?: string) => {
+    addOutcome({
+      conversationId: selectedId,
+      outcome: type,
+      reason,
+      timestamp: new Date(),
+    });
+
+    // Auto follow-up for "sem_resposta"
+    if (type === "sem_resposta") {
+      const followupDate = new Date();
+      followupDate.setDate(followupDate.getDate() + 2);
+      const dateStr = followupDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: `t-followup-${Date.now()}`,
+          text: `Follow-up: ${selected.name} — ${dateStr}`,
+          status: "pendente",
+        },
+      ]);
+    }
+
+    setCloseDialogOpen(false);
+    setShowOtherInput(false);
+    setClosureReason("");
+    forceRender((n) => n + 1);
   };
 
   const pendentes = tasks.filter((t) => t.status === "pendente");
@@ -307,24 +400,38 @@ export default function Atendimento() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant={isHuman ? "outline" : "default"}
-                  className={`text-xs ${!isHuman ? "neon-glow-sm" : ""}`}
-                  onClick={() =>
-                    setHumanControl((prev) => ({ ...prev, [selectedId]: !isHuman }))
-                  }
-                >
-                  {isHuman ? (
-                    <>
-                      <Bot className="h-3.5 w-3.5 mr-1" /> Devolver ao Agente
-                    </>
-                  ) : (
-                    <>
-                      <Headphones className="h-3.5 w-3.5 mr-1" /> Assumir Atendimento
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="text-xs"
+                    onClick={() => {
+                      setShowOtherInput(false);
+                      setClosureReason("");
+                      setCloseDialogOpen(true);
+                    }}
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-1" /> Encerrar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={isHuman ? "outline" : "default"}
+                    className={`text-xs ${!isHuman ? "neon-glow-sm" : ""}`}
+                    onClick={() =>
+                      setHumanControl((prev) => ({ ...prev, [selectedId]: !isHuman }))
+                    }
+                  >
+                    {isHuman ? (
+                      <>
+                        <Bot className="h-3.5 w-3.5 mr-1" /> Devolver ao Agente
+                      </>
+                    ) : (
+                      <>
+                        <Headphones className="h-3.5 w-3.5 mr-1" /> Assumir Atendimento
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {/* Messages */}
@@ -418,6 +525,19 @@ export default function Atendimento() {
           {/* ── RIGHT: Intelligence & Follow-up ─────────────── */}
           <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
             <div className="h-full flex flex-col bg-card/50">
+              {/* Lead Status Badge */}
+              <div className="p-3 border-b border-border flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Status do Lead:</span>
+                <Badge variant="outline" className={`text-xs ${statusConfig[leadStatus].class}`}>
+                  {statusConfig[leadStatus].label}
+                </Badge>
+                {getOutcomeForConversation(selectedId) && (
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    {outcomeLabels[getOutcomeForConversation(selectedId)!.outcome]}
+                  </span>
+                )}
+              </div>
+
               <Tabs defaultValue="tarefas" className="flex flex-col h-full">
                 <TabsList className="mx-3 mt-3 bg-muted/50">
                   <TabsTrigger value="tarefas" className="text-xs gap-1">
@@ -435,7 +555,6 @@ export default function Atendimento() {
                 <TabsContent value="tarefas" className="flex-1 overflow-auto mt-0">
                   <ScrollArea className="h-full">
                     <div className="p-3 space-y-4">
-                      {/* Pendentes */}
                       <div
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={() => onDrop("pendente")}
@@ -464,7 +583,6 @@ export default function Atendimento() {
 
                       <Separator />
 
-                      {/* Concluídos */}
                       <div
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={() => onDrop("concluido")}
@@ -553,6 +671,50 @@ export default function Atendimento() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
+      {/* ── Closure Dialog ────────────────────────────────── */}
+      <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Classificar Desfecho</DialogTitle>
+            <DialogDescription>
+              Encerrar conversa com <strong>{selected.name}</strong>. Selecione o resultado:
+            </DialogDescription>
+          </DialogHeader>
+
+          {!showOtherInput ? (
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {outcomeButtons.map(({ type, icon: Icon, color }) => (
+                <button
+                  key={type}
+                  onClick={() => handleOutcome(type)}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${color}`}
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="text-sm font-medium">{outcomeLabels[type]}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 pt-2">
+              <Textarea
+                placeholder="Descreva o motivo..."
+                value={closureReason}
+                onChange={(e) => setClosureReason(e.target.value)}
+                className="bg-background"
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowOtherInput(false)}>
+                  Voltar
+                </Button>
+                <Button className="flex-1" onClick={() => commitOutcome("outros", closureReason)}>
+                  Confirmar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
