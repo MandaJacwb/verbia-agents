@@ -190,7 +190,7 @@ export default function Contatos() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   Nenhum contato encontrado.
                 </TableCell>
               </TableRow>
