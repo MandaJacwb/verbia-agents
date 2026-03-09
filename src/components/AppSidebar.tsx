@@ -11,6 +11,7 @@ import {
   BarChart3,
   Users,
   UserCog,
+  Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -40,6 +41,7 @@ const allNavItems = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["admin_conta", "admin"] },
   { title: "Faturamento", url: "/faturamento", icon: DollarSign, roles: ["admin_conta"] },
   { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["admin_conta", "admin"] },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin_conta"] },
 ];
 
 export function AppSidebar() {
