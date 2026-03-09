@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      interactions: {
+        Row: {
+          action: string
+          agent_name: string
+          created_at: string
+          id: string
+          interaction_type: string
+          is_hot: boolean
+          lead_name: string
+        }
+        Insert: {
+          action: string
+          agent_name: string
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          is_hot?: boolean
+          lead_name: string
+        }
+        Update: {
+          action?: string
+          agent_name?: string
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          is_hot?: boolean
+          lead_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
