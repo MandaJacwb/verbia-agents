@@ -33,6 +33,7 @@ const navItems = [
   { title: "Leads Qualificados", url: "/leads", icon: Target },
   { title: "Gestão de Envios", url: "/envios", icon: Send },
   { title: "Modelos de Mensagem", url: "/modelos", icon: FileText },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Faturamento", url: "/faturamento", icon: DollarSign },
 ];
 
