@@ -13,12 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Bot,
@@ -40,6 +42,9 @@ import {
   ThumbsDown,
   DollarSign,
   MoreHorizontal,
+  UserCog,
+  Building2,
+  Tag,
 } from "lucide-react";
 import {
   addOutcome,
@@ -47,6 +52,16 @@ import {
   type OutcomeType,
   outcomeLabels,
 } from "@/lib/outcomeStore";
+import {
+  findContactByName,
+  addContact,
+  updateContact,
+  subscribe as subscribeContacts,
+  getContacts,
+  TAG_COLORS,
+  type Contact,
+} from "@/lib/contactsStore";
+import { toast } from "@/hooks/use-toast";
 
 // ── Mock Data ──────────────────────────────────────────────────────
 
@@ -246,11 +261,100 @@ export default function Atendimento() {
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [, forceRender] = useState(0);
 
+  // Contact edit modal state
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    phone: "",
+    empresa: "",
+    email: "",
+    redesSociais: "",
+    tags: "",
+    opportunityValue: "",
+  });
+  const [linkedContactId, setLinkedContactId] = useState<string | null>(null);
+  const [contactsVersion, setContactsVersion] = useState(0);
+
+  // Subscribe to contacts changes
+  useEffect(() => {
+    return subscribeContacts(() => setContactsVersion((v) => v + 1));
+  }, []);
+
   const selected = conversations.find((c) => c.id === selectedId)!;
   const messages = messagesMap[selectedId] ?? defaultMessages;
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
   const leadStatus = getLeadStatus(selectedId);
+
+  // Smart Recognition: find linked contact by name
+  const linkedContact = findContactByName(selected.name);
+
+  // Open contact edit dialog
+  const openContactEditor = () => {
+    if (linkedContact) {
+      setLinkedContactId(linkedContact.id);
+      setContactForm({
+        name: linkedContact.name,
+        phone: linkedContact.phone,
+        empresa: linkedContact.empresa || "",
+        email: linkedContact.email || "",
+        redesSociais: linkedContact.redesSociais || linkedContact.instagram || "",
+        tags: linkedContact.tags.join(", "),
+        opportunityValue: linkedContact.opportunityValue?.toString() || "",
+      });
+    } else {
+      setLinkedContactId(null);
+      setContactForm({
+        name: selected.name,
+        phone: "",
+        empresa: "",
+        email: "",
+        redesSociais: "",
+        tags: "",
+        opportunityValue: "",
+      });
+    }
+    setContactDialogOpen(true);
+  };
+
+  const saveContact = () => {
+    if (!contactForm.name || !contactForm.phone) {
+      toast({ title: "Nome e telefone são obrigatórios", variant: "destructive" });
+      return;
+    }
+    const tags = contactForm.tags
+      ? contactForm.tags.split(",").map((t) => t.trim().toUpperCase()).filter(Boolean)
+      : [];
+    const oppValue = contactForm.opportunityValue ? parseFloat(contactForm.opportunityValue) : undefined;
+
+    if (linkedContactId) {
+      updateContact(linkedContactId, {
+        name: contactForm.name,
+        phone: contactForm.phone,
+        empresa: contactForm.empresa || undefined,
+        email: contactForm.email || undefined,
+        redesSociais: contactForm.redesSociais || undefined,
+        instagram: contactForm.redesSociais || undefined,
+        tags,
+        opportunityValue: oppValue,
+      });
+      toast({ title: "Contato atualizado com sucesso!" });
+    } else {
+      const newC = addContact({
+        name: contactForm.name,
+        phone: contactForm.phone,
+        empresa: contactForm.empresa || undefined,
+        email: contactForm.email || undefined,
+        redesSociais: contactForm.redesSociais || undefined,
+        instagram: contactForm.redesSociais || undefined,
+        tags,
+        opportunityValue: oppValue,
+      });
+      setLinkedContactId(newC.id);
+      toast({ title: "Contato cadastrado no CRM!" });
+    }
+    setContactDialogOpen(false);
+  };
 
   // Drag handlers
   const onDragStart = (e: DragEvent, taskId: string) => {
@@ -275,10 +379,12 @@ export default function Atendimento() {
   };
 
   const commitOutcome = (type: OutcomeType, reason?: string) => {
+    const oppValue = linkedContact?.opportunityValue;
     addOutcome({
       conversationId: selectedId,
       outcome: type,
       reason,
+      opportunityValue: (type === "venda" || type === "agendamento") ? oppValue : undefined,
       timestamp: new Date(),
     });
 
@@ -394,13 +500,30 @@ export default function Atendimento() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{selected.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{selected.name}</p>
+                      {linkedContact?.empresa && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-chart-2/15 text-chart-2 border-chart-2/30">
+                          <Building2 className="h-2.5 w-2.5 mr-0.5" />
+                          {linkedContact.empresa}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground">
                       {isHuman ? "Atendente humano no controle" : "Agente IA no controle"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={openContactEditor}
+                  >
+                    <UserCog className="h-3.5 w-3.5 mr-1" />
+                    {linkedContact ? "Editar Contato" : "Salvar Contato"}
+                  </Button>
                   <Button
                     size="sm"
                     variant="destructive"
@@ -538,6 +661,47 @@ export default function Atendimento() {
                 )}
               </div>
 
+              {/* Contact Summary Card */}
+              {linkedContact && (
+                <div className="p-3 border-b border-border space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-3.5 w-3.5 text-chart-2" />
+                    <span className="text-xs font-medium text-foreground">
+                      {linkedContact.empresa ? `Cliente da ${linkedContact.empresa}` : "Empresa não informada"}
+                    </span>
+                  </div>
+                  {linkedContact.tags.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
+                      {linkedContact.tags.map((tag) => {
+                        const colors = TAG_COLORS[tag];
+                        return (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                            style={
+                              colors
+                                ? { backgroundColor: colors.bg, color: colors.text }
+                                : undefined
+                            }
+                          >
+                            {tag}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {linkedContact.opportunityValue && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs text-primary font-semibold">
+                        Oportunidade: R$ {linkedContact.opportunityValue.toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Tabs defaultValue="tarefas" className="flex flex-col h-full">
                 <TabsList className="mx-3 mt-3 bg-muted/50">
                   <TabsTrigger value="tarefas" className="text-xs gap-1">
@@ -616,6 +780,44 @@ export default function Atendimento() {
                 <TabsContent value="memoria" className="flex-1 overflow-auto mt-0">
                   <ScrollArea className="h-full">
                     <div className="p-3 space-y-3">
+                      {/* Contact CRM summary in memory */}
+                      {linkedContact && (
+                        <div className="p-3 rounded-lg bg-chart-2/5 border border-chart-2/15">
+                          <p className="text-xs font-semibold text-chart-2 mb-2 flex items-center gap-1.5">
+                            <Building2 className="h-3.5 w-3.5" /> Dados do CRM
+                          </p>
+                          <ul className="space-y-1.5 text-sm text-foreground/80">
+                            <li className="flex items-center gap-2">
+                              <span className="text-chart-2">•</span>
+                              <span className="font-medium">{linkedContact.name}</span>
+                              {linkedContact.empresa && (
+                                <span className="text-muted-foreground">— {linkedContact.empresa}</span>
+                              )}
+                            </li>
+                            {linkedContact.phone && (
+                              <li className="flex items-center gap-2">
+                                <span className="text-chart-2">•</span>
+                                <span className="font-mono text-xs">{linkedContact.phone}</span>
+                              </li>
+                            )}
+                            {linkedContact.email && (
+                              <li className="flex items-center gap-2">
+                                <span className="text-chart-2">•</span>
+                                {linkedContact.email}
+                              </li>
+                            )}
+                            {linkedContact.opportunityValue && (
+                              <li className="flex items-center gap-2">
+                                <span className="text-chart-2">•</span>
+                                <span className="text-primary font-semibold">
+                                  Oportunidade: R$ {linkedContact.opportunityValue.toLocaleString("pt-BR")}
+                                </span>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
                       <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
                         <p className="text-xs font-semibold text-primary mb-2 flex items-center gap-1.5">
                           <Brain className="h-3.5 w-3.5" /> Resumo de Memória — {selected.name}
@@ -713,6 +915,99 @@ export default function Atendimento() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Contact Edit/Save Dialog ─────────────────────── */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5 text-primary" />
+              {linkedContactId ? "Editar Contato" : "Cadastrar Contato"}
+            </DialogTitle>
+            <DialogDescription>
+              {linkedContactId
+                ? "Atualize os dados deste contato no CRM."
+                : "Salve este lead como contato no CRM."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome *</Label>
+              <Input
+                value={contactForm.name}
+                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                placeholder="Nome completo"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Telefone *</Label>
+              <Input
+                value={contactForm.phone}
+                onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                placeholder="+55 11 99999-9999"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Empresa</Label>
+              <Input
+                value={contactForm.empresa}
+                onChange={(e) => setContactForm({ ...contactForm, empresa: e.target.value })}
+                placeholder="Nome da empresa"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">E-mail</Label>
+              <Input
+                value={contactForm.email}
+                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                placeholder="email@exemplo.com"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Redes Sociais</Label>
+              <Input
+                value={contactForm.redesSociais}
+                onChange={(e) => setContactForm({ ...contactForm, redesSociais: e.target.value })}
+                placeholder="@usuario"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <DollarSign className="h-3 w-3 text-primary" /> Valor da Oportunidade
+              </Label>
+              <Input
+                type="number"
+                value={contactForm.opportunityValue}
+                onChange={(e) => setContactForm({ ...contactForm, opportunityValue: e.target.value })}
+                placeholder="R$ 0,00"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-xs">Etiquetas</Label>
+              <Input
+                value={contactForm.tags}
+                onChange={(e) => setContactForm({ ...contactForm, tags: e.target.value })}
+                placeholder="VIP, LEAD QUALIFICADO (separar por vírgula)"
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setContactDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveContact} className="neon-glow-sm">
+              {linkedContactId ? "Salvar Alterações" : "Cadastrar no CRM"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

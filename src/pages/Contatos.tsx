@@ -28,7 +28,7 @@ export default function Contatos() {
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newOpen, setNewOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", instagram: "", email: "", tags: "" });
+  const [form, setForm] = useState({ name: "", phone: "", instagram: "", email: "", empresa: "", opportunityValue: "", tags: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -64,9 +64,11 @@ export default function Contatos() {
       phone: form.phone,
       instagram: form.instagram || undefined,
       email: form.email || undefined,
+      empresa: form.empresa || undefined,
+      opportunityValue: form.opportunityValue ? parseFloat(form.opportunityValue) : undefined,
       tags: form.tags ? form.tags.split(",").map((t) => t.trim().toUpperCase()) : [],
     });
-    setForm({ name: "", phone: "", instagram: "", email: "", tags: "" });
+    setForm({ name: "", phone: "", instagram: "", email: "", empresa: "", opportunityValue: "", tags: "" });
     setNewOpen(false);
     toast({ title: "Contato adicionado com sucesso!" });
   };
@@ -178,15 +180,17 @@ export default function Contatos() {
             <TableRow className="border-b border-border/50 hover:bg-transparent">
               <TableHead className="w-[280px]">Contato</TableHead>
               <TableHead>Telefone</TableHead>
+              <TableHead>Empresa</TableHead>
               <TableHead>Instagram</TableHead>
               <TableHead>E-mail</TableHead>
+              <TableHead>Oportunidade</TableHead>
               <TableHead>Etiquetas</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   Nenhum contato encontrado.
                 </TableCell>
               </TableRow>
@@ -204,8 +208,12 @@ export default function Contatos() {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">{c.phone}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{c.empresa || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{c.instagram || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{c.email || "—"}</TableCell>
+                  <TableCell className="text-sm font-mono text-primary">
+                    {c.opportunityValue ? `R$ ${c.opportunityValue.toLocaleString("pt-BR")}` : "—"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1.5">
                       {c.tags.map((tag) => (
@@ -248,26 +256,34 @@ export default function Contatos() {
             <DialogTitle>Novo Contato</DialogTitle>
             <DialogDescription>Preencha os dados do contato para cadastro rápido.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Nome *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Telefone *</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+55 11 99999-9999" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Telefone *</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+55 11 99999-9999" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Instagram</Label>
-              <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Empresa</Label>
+              <Input value={form.empresa} onChange={(e) => setForm({ ...form, empresa: e.target.value })} placeholder="Nome da empresa" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>E-mail</Label>
-              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">E-mail</Label>
+              <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className="h-9 text-sm" />
             </div>
-            <div>
-              <Label>Etiquetas</Label>
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="VIP, ESTÉTICA (separar por vírgula)" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Instagram</Label>
+              <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" className="h-9 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Valor da Oportunidade</Label>
+              <Input type="number" value={form.opportunityValue} onChange={(e) => setForm({ ...form, opportunityValue: e.target.value })} placeholder="R$ 0,00" className="h-9 text-sm" />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-xs">Etiquetas</Label>
+              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="VIP, ESTÉTICA (separar por vírgula)" className="h-9 text-sm" />
             </div>
           </div>
           <DialogFooter>

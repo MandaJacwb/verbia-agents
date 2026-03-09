@@ -1,13 +1,10 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Calendar, Flame, TrendingUp, Bot } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { getConvertedROI, subscribe as subscribeOutcomes } from "@/lib/outcomeStore";
 
-const metrics = [
-  { title: "Conversas Ativas", value: "248", change: "+12%", icon: MessageSquare },
-  { title: "Agendamentos Realizados", value: "89", change: "+23%", icon: Calendar },
-  { title: "Leads Quentes", value: "34", change: "+8%", icon: Flame },
-  { title: "ROI Mensal", value: "R$ 45.2k", change: "+31%", icon: TrendingUp },
-];
+const baseROI = 45200;
 
 const chartData = [
   { name: "Seg", conversoes: 12, leads: 24 },
@@ -29,6 +26,24 @@ const recentInteractions = [
 ];
 
 const Dashboard = () => {
+  const [convertedROI, setConvertedROI] = useState(getConvertedROI());
+
+  useEffect(() => {
+    return subscribeOutcomes(() => setConvertedROI(getConvertedROI()));
+  }, []);
+
+  const totalROI = baseROI + convertedROI;
+  const roiFormatted = totalROI >= 1000
+    ? `R$ ${(totalROI / 1000).toFixed(1)}k`
+    : `R$ ${totalROI}`;
+
+  const metrics = [
+    { title: "Conversas Ativas", value: "248", change: "+12%", icon: MessageSquare },
+    { title: "Agendamentos Realizados", value: "89", change: "+23%", icon: Calendar },
+    { title: "Leads Quentes", value: "34", change: "+8%", icon: Flame },
+    { title: "ROI Mensal", value: roiFormatted, change: "+31%", icon: TrendingUp },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
