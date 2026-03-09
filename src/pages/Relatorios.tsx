@@ -110,7 +110,7 @@ function getHeatColor(value: number) {
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("overview");
-
+  const chart = useChartColors();
   const totalConversas = 2480;
   const tempoHumanoMin = totalConversas * 5;
   const tempoHumanoH = Math.round(tempoHumanoMin / 60);
