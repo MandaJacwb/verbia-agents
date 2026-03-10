@@ -39,7 +39,7 @@ const PlansSection = ({ sectionRef, onBuy }: PlansSectionProps) => {
     <section ref={(el) => {
       (internalRef as React.MutableRefObject<HTMLElement | null>).current = el;
       if (sectionRef && 'current' in sectionRef) {
-        (sectionRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        (sectionRef as React.MutableRefObject<HTMLDivElement | null>).current = el as unknown as HTMLDivElement;
       }
     }} id="planos" className="py-20 px-4 relative">
       <div className="absolute inset-0 pointer-events-none">
