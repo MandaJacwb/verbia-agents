@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { getCurrentUser } from "@/lib/usersStore";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -48,8 +48,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const currentUser = getCurrentUser();
-  const navItems = allNavItems.filter((item) => item.roles.includes(currentUser.role));
+  const { profile } = useAuth();
+  const navItems = allNavItems.filter((item) =>
+    profile?.role ? item.roles.includes(profile.role) : false
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">

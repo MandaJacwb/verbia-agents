@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
+import Login from "./pages/Login";
 import Index from "./pages/Index";
 import Agentes from "./pages/Agentes";
 import AgentConfig from "./pages/AgentConfig";
@@ -30,26 +32,29 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/landing" element={<Landing />} />
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/agentes" element={<Agentes />} />
-              <Route path="/agentes/novo" element={<AgentConfig />} />
-              <Route path="/agentes/:id" element={<AgentConfig />} />
-              <Route path="/atendimento" element={<Atendimento />} />
-              <Route path="/integracoes" element={<Integracoes />} />
-              <Route path="/leads" element={<Leads />} />
-              <Route path="/faturamento" element={<Faturamento />} />
-              <Route path="/envios" element={<Envios />} />
-              <Route path="/modelos" element={<ModelosMensagem />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/contatos" element={<Contatos />} />
-              <Route path="/usuarios" element={<Usuarios />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/landing" element={<Landing />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/agentes" element={<Agentes />} />
+                <Route path="/agentes/novo" element={<AgentConfig />} />
+                <Route path="/agentes/:id" element={<AgentConfig />} />
+                <Route path="/atendimento" element={<Atendimento />} />
+                <Route path="/integracoes" element={<Integracoes />} />
+                <Route path="/leads" element={<Leads />} />
+                <Route path="/faturamento" element={<Faturamento />} />
+                <Route path="/envios" element={<Envios />} />
+                <Route path="/modelos" element={<ModelosMensagem />} />
+                <Route path="/relatorios" element={<Relatorios />} />
+                <Route path="/contatos" element={<Contatos />} />
+                <Route path="/usuarios" element={<Usuarios />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
