@@ -14,8 +14,248 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          id: string
+          name: string
+          plan: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          plan?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          plan?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agents: {
+        Row: {
+          account_id: string
+          active: boolean
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          n8n_webhook_url: string | null
+          name: string
+          objective: string | null
+          tone: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          n8n_webhook_url?: string | null
+          name: string
+          objective?: string | null
+          tone?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          n8n_webhook_url?: string | null
+          name?: string
+          objective?: string | null
+          tone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          account_id: string
+          channel: string
+          created_at: string
+          id: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          status: string
+          template_id: string | null
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          channel?: string
+          created_at?: string
+          id?: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: string
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          account_id: string
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          phone: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          account_id: string
+          agent_id: string | null
+          channel: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          agent_id?: string | null
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          agent_id?: string | null
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interactions: {
         Row: {
+          account_id: string | null
           action: string
           agent_name: string
           created_at: string
@@ -25,6 +265,7 @@ export type Database = {
           lead_name: string
         }
         Insert: {
+          account_id?: string | null
           action: string
           agent_name: string
           created_at?: string
@@ -34,6 +275,7 @@ export type Database = {
           lead_name: string
         }
         Update: {
+          account_id?: string | null
           action?: string
           agent_name?: string
           created_at?: string
@@ -42,14 +284,205 @@ export type Database = {
           is_hot?: boolean
           lead_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "interactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          account_id: string
+          agent_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          is_hot: boolean
+          notes: string | null
+          score: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          is_hot?: boolean
+          notes?: string | null
+          score?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          agent_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          is_hot?: boolean
+          notes?: string | null
+          score?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          account_id: string
+          category: string
+          content: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          variables: string[] | null
+        }
+        Insert: {
+          account_id: string
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Update: {
+          account_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          account_id: string
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          account_id: string
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          account_id?: string
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          account_id: string
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_account_id: { Args: never; Returns: string }
+      get_my_role: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
