@@ -60,7 +60,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select("*")
       .eq("id", userId)
       .single();
-    setProfile(data as Profile | null);
+
+    if (data) {
+      setProfile(data as Profile);
+    } else {
+      // Perfil não existe ainda (ex: login via magic link) — busca account_id disponível
+      const { data: accounts } = await supabase.from("accounts").select("id").limit(1).single();
+      if (accounts) {
+        const newProfile = {
+          id: userId,
+          account_id: accounts.id,
+          full_name: null,
+          role: "admin_conta" as const,
+          avatar_url: null,
+        };
+        await supabase.from("profiles").upsert(newProfile);
+        setProfile(newProfile);
+      }
+    }
     setLoading(false);
   }
 

@@ -49,8 +49,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile } = useAuth();
+  // Se perfil ainda não carregou ou não existe, mostra todos os itens (fallback admin_conta)
   const navItems = allNavItems.filter((item) =>
-    profile?.role ? item.roles.includes(profile.role) : false
+    profile?.role ? item.roles.includes(profile.role) : item.roles.includes("admin_conta")
   );
 
   return (
