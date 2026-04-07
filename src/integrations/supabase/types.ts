@@ -642,29 +642,38 @@ export type Database = {
           agent_name: string
           created_at: string
           id: string
+          contact_name: string | null
           interaction_type: string
           is_hot: boolean
           lead_name: string
+          message_content: string | null
+          phone_number: string | null
         }
         Insert: {
           account_id?: string | null
           action: string
           agent_name: string
+          contact_name?: string | null
           created_at?: string
           id?: string
           interaction_type?: string
           is_hot?: boolean
           lead_name: string
+          message_content?: string | null
+          phone_number?: string | null
         }
         Update: {
           account_id?: string | null
           action?: string
           agent_name?: string
+          contact_name?: string | null
           created_at?: string
           id?: string
           interaction_type?: string
           is_hot?: boolean
           lead_name?: string
+          message_content?: string | null
+          phone_number?: string | null
         }
         Relationships: [
           {
