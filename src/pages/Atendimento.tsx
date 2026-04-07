@@ -62,6 +62,7 @@ import {
   type Contact,
 } from "@/lib/contactsStore";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Mock Data ──────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ interface Conversation {
   lastActivity: string;
 }
 
-const conversations: Conversation[] = [
+const mockConversations: Conversation[] = [
   { id: "1", name: "Lucas Mendes", initials: "LM", tag: "vendas", controlledBy: "ia", unread: 3, lastActivity: "2min" },
   { id: "2", name: "Ana Oliveira", initials: "AO", tag: "suporte", controlledBy: "humano", unread: 0, lastActivity: "5min" },
   { id: "3", name: "Carlos Silva", initials: "CS", tag: "mandaja", controlledBy: "ia", unread: 1, lastActivity: "12min" },
@@ -109,7 +110,7 @@ interface Message {
   time: string;
 }
 
-const messagesMap: Record<string, Message[]> = {
+const mockMessagesMap: Record<string, Message[]> = {
   "1": [
     { id: "m1", sender: "cliente", text: "Oi, gostaria de saber sobre o plano Premium.", time: "14:01" },
     { id: "m2", sender: "ia", text: "Olá Lucas! O plano Premium inclui 5 agentes, integrações ilimitadas e suporte prioritário. Posso te enviar uma proposta?", time: "14:01" },
@@ -246,7 +247,72 @@ const outcomeButtons: { type: OutcomeType; icon: typeof ShoppingCart; color: str
 
 // ── Component ──────────────────────────────────────────────────────
 
+// ── Interaction row type (from Supabase) ──────────────────────────
+interface InteractionRow {
+  id: string;
+  agent_name: string;
+  lead_name: string;
+  action: string;
+  is_hot: boolean;
+  interaction_type: string;
+  created_at: string;
+  account_id: string | null;
+  phone_number: string | null;
+  message_content: string | null;
+  contact_name: string | null;
+}
+
+function buildLiveData(rows: InteractionRow[]): {
+  conversations: Conversation[];
+  messagesMap: Record<string, Message[]>;
+} {
+  // Group by phone_number, falling back to lead_name
+  const groups: Record<string, InteractionRow[]> = {};
+  for (const row of rows) {
+    const key = row.phone_number || row.lead_name;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(row);
+  }
+
+  const conversations: Conversation[] = Object.entries(groups).map(([key, groupRows]) => {
+    const latest = groupRows[groupRows.length - 1];
+    const name = latest.contact_name || latest.lead_name || key;
+    const initials = name
+      .split(" ")
+      .slice(0, 2)
+      .map((w: string) => w[0]?.toUpperCase() || "")
+      .join("") || "?";
+    const diffMin = Math.round((Date.now() - new Date(latest.created_at).getTime()) / 60000);
+    const lastActivity = diffMin < 60 ? `${diffMin}min` : `${Math.round(diffMin / 60)}h`;
+    return {
+      id: `live-${key}`,
+      name,
+      initials,
+      tag: "vendas" as TagColor,
+      controlledBy: "ia" as const,
+      unread: groupRows.filter((r) => !r.is_hot).length > 0 ? 1 : 0,
+      lastActivity,
+    };
+  });
+
+  const messagesMap: Record<string, Message[]> = {};
+  for (const [key, groupRows] of Object.entries(groups)) {
+    messagesMap[`live-${key}`] = groupRows.map((row) => ({
+      id: row.id,
+      sender: "cliente" as MsgSender,
+      text: row.message_content || row.action,
+      time: new Date(row.created_at).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }));
+  }
+
+  return { conversations, messagesMap };
+}
+
 export default function Atendimento() {
+  const [liveRows, setLiveRows] = useState<InteractionRow[]>([]);
   const [selectedId, setSelectedId] = useState("1");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [humanControl, setHumanControl] = useState<Record<string, boolean>>({});
@@ -280,7 +346,40 @@ export default function Atendimento() {
     return subscribeContacts(() => setContactsVersion((v) => v + 1));
   }, []);
 
-  const selected = conversations.find((c) => c.id === selectedId)!;
+  // Fetch interactions from Supabase + subscribe to realtime inserts
+  useEffect(() => {
+    supabase
+      .from("interactions")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (data) setLiveRows(data as InteractionRow[]);
+      });
+
+    const channel = supabase
+      .channel("atendimento-interactions")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "interactions" },
+        (payload) => {
+          setLiveRows((prev) => [...prev, payload.new as InteractionRow]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Derive live conversations + messages from DB rows
+  const { conversations: liveConversations, messagesMap: liveMessagesMap } = buildLiveData(liveRows);
+
+  // Merge: DB conversations first, then mock fallback
+  const conversations = [...liveConversations, ...mockConversations];
+  const messagesMap = { ...mockMessagesMap, ...liveMessagesMap };
+
+  const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
