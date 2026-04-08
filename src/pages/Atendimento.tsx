@@ -45,6 +45,10 @@ import {
   UserCog,
   Building2,
   Tag,
+  Star,
+  ArrowUpDown,
+  MessageCircle,
+  Filter,
 } from "lucide-react";
 import {
   addOutcome,
@@ -340,6 +344,23 @@ export default function Atendimento() {
   });
   const [linkedContactId, setLinkedContactId] = useState<string | null>(null);
   const [contactsVersion, setContactsVersion] = useState(0);
+
+  // Filter state
+  const [filterUnread, setFilterUnread] = useState(false);
+  const [filterFavorites, setFilterFavorites] = useState(false);
+  const [filterIA, setFilterIA] = useState(false);
+  const [filterTag, setFilterTag] = useState<TagColor | null>(null);
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest">("recent");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Subscribe to contacts changes
   useEffect(() => {
