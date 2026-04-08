@@ -304,7 +304,7 @@ function buildLiveData(rows: InteractionRow[]): {
   for (const [key, groupRows] of Object.entries(groups)) {
     messagesMap[`live-${key}`] = groupRows.map((row) => ({
       id: row.id,
-      sender: "cliente" as MsgSender,
+      sender: (row.action === "message_sent" ? (row.agent_name === "ia" ? "ia" : "humano") : "cliente") as MsgSender,
       text: row.message_content || row.action,
       time: new Date(row.created_at).toLocaleTimeString("pt-BR", {
         hour: "2-digit",
@@ -448,14 +448,41 @@ export default function Atendimento() {
       return;
     }
     setIsSending(true);
+    // Optimistically add message to UI immediately
+    const tempMsg: InteractionRow = {
+      id: `temp-${Date.now()}`,
+      agent_name: "humano",
+      lead_name: selected.name,
+      action: "message_sent",
+      is_hot: false,
+      interaction_type: "whatsapp_message",
+      created_at: new Date().toISOString(),
+      account_id: profile?.account_id ?? null,
+      phone_number: selectedPhone,
+      message_content: text,
+      contact_name: selected.name,
+    };
+    setLiveRows((prev) => [...prev, tempMsg]);
+    setMsgInput("");
     try {
       const { error } = await supabase.functions.invoke("send-message", {
         body: { phone: selectedPhone, message: text },
       });
       if (error) throw error;
-      setMsgInput("");
-      toast({ title: "Mensagem enviada!" });
+      // Also persist to Supabase so it survives refresh
+      await supabase.from("interactions").insert({
+        phone_number: selectedPhone,
+        message_content: text,
+        lead_name: selected.name,
+        contact_name: selected.name,
+        action: "message_sent",
+        agent_name: "humano",
+        account_id: profile?.account_id ?? "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      });
     } catch (err: unknown) {
+      // Remove optimistic message on error
+      setLiveRows((prev) => prev.filter((r) => r.id !== tempMsg.id));
+      setMsgInput(text);
       const msg = err instanceof Error ? err.message : "Erro ao enviar mensagem";
       toast({ title: "Erro ao enviar", description: msg, variant: "destructive" });
     } finally {
