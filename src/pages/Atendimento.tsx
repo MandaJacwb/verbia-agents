@@ -439,8 +439,7 @@ export default function Atendimento() {
   // Extract phone from live conversation id (format: "live-+5541991271813")
   const selectedPhone = selectedId.startsWith("live-") ? selectedId.replace("live-", "") : null;
 
-  // Send message via N8N → Evolution API
-  const N8N_SEND_URL = "https://cleveralpaca-n8n.cloudfy.live/webhook/verbia-send-whatsapp";
+  // Send message via Supabase edge function → N8N → Evolution API
   const [isSending, setIsSending] = useState(false);
   const handleSendMessage = async () => {
     const text = msgInput.trim();
@@ -450,12 +449,10 @@ export default function Atendimento() {
     }
     setIsSending(true);
     try {
-      const res = await fetch(N8N_SEND_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: selectedPhone, message: text }),
+      const { error } = await supabase.functions.invoke("send-message", {
+        body: { phone: selectedPhone, message: text },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (error) throw error;
       setMsgInput("");
       toast({ title: "Mensagem enviada!" });
     } catch (err: unknown) {
