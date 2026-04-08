@@ -388,7 +388,21 @@ export default function Atendimento() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "interactions" },
         (payload) => {
-          setLiveRows((prev) => [...prev, payload.new as InteractionRow]);
+          const newRow = payload.new as InteractionRow;
+          setLiveRows((prev) => {
+            // Replace optimistic temp message with real one if content matches
+            const tempIdx = prev.findIndex(
+              (r) => r.id.startsWith("temp-") &&
+                r.phone_number === newRow.phone_number &&
+                r.message_content === newRow.message_content
+            );
+            if (tempIdx !== -1) {
+              const next = [...prev];
+              next[tempIdx] = newRow;
+              return next;
+            }
+            return [...prev, newRow];
+          });
         }
       )
       .subscribe();
