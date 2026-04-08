@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import Index from "./pages/Index";
 import Agentes from "./pages/Agentes";
 import AgentConfig from "./pages/AgentConfig";
@@ -37,6 +38,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/landing" element={<Landing />} />
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Index />} />
