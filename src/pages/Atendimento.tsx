@@ -45,6 +45,10 @@ import {
   UserCog,
   Building2,
   Tag,
+  Star,
+  ArrowUpDown,
+  MessageCircle,
+  Filter,
 } from "lucide-react";
 import {
   addOutcome,
@@ -341,6 +345,23 @@ export default function Atendimento() {
   const [linkedContactId, setLinkedContactId] = useState<string | null>(null);
   const [contactsVersion, setContactsVersion] = useState(0);
 
+  // Filter state
+  const [filterUnread, setFilterUnread] = useState(false);
+  const [filterFavorites, setFilterFavorites] = useState(false);
+  const [filterIA, setFilterIA] = useState(false);
+  const [filterTag, setFilterTag] = useState<TagColor | null>(null);
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest">("recent");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Subscribe to contacts changes
   useEffect(() => {
     return subscribeContacts(() => setContactsVersion((v) => v + 1));
@@ -376,8 +397,33 @@ export default function Atendimento() {
   const { conversations: liveConversations, messagesMap: liveMessagesMap } = buildLiveData(liveRows);
 
   // Merge: DB conversations first, then mock fallback
-  const conversations = [...liveConversations, ...mockConversations];
+  const allConversations = [...liveConversations, ...mockConversations];
   const messagesMap = { ...mockMessagesMap, ...liveMessagesMap };
+
+  // Parse lastActivity to minutes for sorting
+  const parseActivityToMin = (activity: string): number => {
+    const num = parseInt(activity) || 0;
+    if (activity.includes("h")) return num * 60;
+    return num;
+  };
+
+  // Apply filters & sort
+  const conversations = allConversations
+    .filter((c) => {
+      if (filterUnread && c.unread === 0) return false;
+      if (filterFavorites && !favorites.has(c.id)) return false;
+      if (filterIA) {
+        const ctrl = humanControl[c.id] ?? c.controlledBy;
+        if (ctrl !== "ia") return false;
+      }
+      if (filterTag && c.tag !== filterTag) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const aMin = parseActivityToMin(a.lastActivity);
+      const bMin = parseActivityToMin(b.lastActivity);
+      return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
+    });
 
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
@@ -531,11 +577,75 @@ export default function Atendimento() {
               <div className="p-3 border-b border-border">
                 <Input placeholder="Buscar conversa..." className="h-8 text-sm bg-background" />
               </div>
+
+              {/* ── Smart Filters ────────────────────────────── */}
+              <div className="px-3 py-2 border-b border-border flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setFilterUnread((v) => !v)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-all ${
+                    filterUnread
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  <MessageCircle className="h-3 w-3" />
+                  Não Lidas
+                </button>
+                <button
+                  onClick={() => setFilterFavorites((v) => !v)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-all ${
+                    filterFavorites
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Star className="h-3 w-3" />
+                  Favoritos
+                </button>
+                <button
+                  onClick={() => setFilterIA((v) => !v)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-all ${
+                    filterIA
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Bot className="h-3 w-3" />
+                  IA Ativa
+                </button>
+                <select
+                  value={filterTag ?? ""}
+                  onChange={(e) => setFilterTag(e.target.value ? (e.target.value as TagColor) : null)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium border transition-all bg-muted/50 outline-none cursor-pointer ${
+                    filterTag
+                      ? "border-primary text-primary bg-primary/15"
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  <option value="">Setor</option>
+                  {(Object.keys(tagLabels) as TagColor[]).map((t) => (
+                    <option key={t} value={t}>{tagLabels[t]}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setSortOrder((v) => (v === "recent" ? "oldest" : "recent"))}
+                  className="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border border-border bg-muted/50 text-muted-foreground hover:border-primary/50 transition-all"
+                  title={sortOrder === "recent" ? "Mais Recentes" : "Mais Antigas"}
+                >
+                  <ArrowUpDown className="h-3 w-3" />
+                  {sortOrder === "recent" ? "Recentes" : "Antigas"}
+                </button>
+              </div>
+
               <ScrollArea className="flex-1">
                 <div className="p-2 space-y-1">
+                  {conversations.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-6">Nenhuma conversa encontrada</p>
+                  )}
                   {conversations.map((conv) => {
                     const active = conv.id === selectedId;
                     const isCtrlHuman = humanControl[conv.id] ?? conv.controlledBy === "humano";
+                    const isFav = favorites.has(conv.id);
                     return (
                       <button
                         key={conv.id}
@@ -572,11 +682,22 @@ export default function Atendimento() {
                             </Badge>
                           </div>
                         </div>
-                        {conv.unread > 0 && (
-                          <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {conv.unread}
-                          </span>
-                        )}
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <Star
+                            className={`h-3.5 w-3.5 cursor-pointer transition-colors ${
+                              isFav ? "fill-primary text-primary" : "text-muted-foreground/40 hover:text-primary/60"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(conv.id);
+                            }}
+                          />
+                          {conv.unread > 0 && (
+                            <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                              {conv.unread}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
