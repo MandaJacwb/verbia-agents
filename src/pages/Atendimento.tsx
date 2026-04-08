@@ -67,6 +67,7 @@ import {
 } from "@/lib/contactsStore";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ── Mock Data ──────────────────────────────────────────────────────
 
@@ -316,6 +317,7 @@ function buildLiveData(rows: InteractionRow[]): {
 }
 
 export default function Atendimento() {
+  const { profile } = useAuth();
   const [liveRows, setLiveRows] = useState<InteractionRow[]>([]);
   const [selectedId, setSelectedId] = useState("1");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -369,13 +371,16 @@ export default function Atendimento() {
 
   // Fetch interactions from Supabase + subscribe to realtime inserts
   useEffect(() => {
-    supabase
+    const query = supabase
       .from("interactions")
       .select("*")
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        if (data) setLiveRows(data as InteractionRow[]);
-      });
+      .order("created_at", { ascending: true });
+
+    query.then(({ data, error }) => {
+      if (error) console.error("[Atendimento] Supabase fetch error:", error);
+      console.log("[Atendimento] rows fetched:", data?.length, "profile.account_id:", profile?.account_id);
+      if (data) setLiveRows(data as InteractionRow[]);
+    });
 
     const channel = supabase
       .channel("atendimento-interactions")
@@ -391,7 +396,7 @@ export default function Atendimento() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [profile?.account_id]);
 
   // Derive live conversations + messages from DB rows
   const { conversations: liveConversations, messagesMap: liveMessagesMap } = buildLiveData(liveRows);
@@ -430,6 +435,36 @@ export default function Atendimento() {
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
   const leadStatus = getLeadStatus(selectedId);
+
+  // Extract phone from live conversation id (format: "live-+5541991271813")
+  const selectedPhone = selectedId.startsWith("live-") ? selectedId.replace("live-", "") : null;
+
+  // Send message via N8N → Evolution API
+  const N8N_SEND_URL = "https://cleveralpaca-n8n.cloudfy.live/webhook/verbia-send-whatsapp";
+  const [isSending, setIsSending] = useState(false);
+  const handleSendMessage = async () => {
+    const text = msgInput.trim();
+    if (!text || !selectedPhone) {
+      if (!selectedPhone) toast({ title: "Sem WhatsApp", description: "Esta conversa não tem número de telefone associado.", variant: "destructive" });
+      return;
+    }
+    setIsSending(true);
+    try {
+      const res = await fetch(N8N_SEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: selectedPhone, message: text }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setMsgInput("");
+      toast({ title: "Mensagem enviada!" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar mensagem";
+      toast({ title: "Erro ao enviar", description: msg, variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // Smart Recognition: find linked contact by name
   const linkedContact = findContactByName(selected.name);
@@ -837,9 +872,11 @@ export default function Atendimento() {
                         placeholder="Digite sua mensagem..."
                         value={msgInput}
                         onChange={(e) => setMsgInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                         className="h-9 text-sm bg-background"
+                        disabled={isSending}
                       />
-                      <Button size="icon" className="h-9 w-9 shrink-0 neon-glow-sm">
+                      <Button size="icon" className="h-9 w-9 shrink-0 neon-glow-sm" onClick={handleSendMessage} disabled={isSending || !msgInput.trim()}>
                         <Send className="h-4 w-4" />
                       </Button>
                     </div>
