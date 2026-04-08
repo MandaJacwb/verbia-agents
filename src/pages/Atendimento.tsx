@@ -1,4 +1,4 @@
-import { useState, DragEvent, useEffect } from "react";
+import { useState, DragEvent, useEffect, useRef } from "react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -446,6 +446,12 @@ export default function Atendimento() {
 
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
+
+  // Auto-scroll to bottom when messages change or conversation switches
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, selectedId]);
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
   const leadStatus = getLeadStatus(selectedId);
@@ -884,6 +890,7 @@ export default function Atendimento() {
                       </div>
                     );
                   })}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
