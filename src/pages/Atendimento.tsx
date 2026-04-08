@@ -397,8 +397,33 @@ export default function Atendimento() {
   const { conversations: liveConversations, messagesMap: liveMessagesMap } = buildLiveData(liveRows);
 
   // Merge: DB conversations first, then mock fallback
-  const conversations = [...liveConversations, ...mockConversations];
+  const allConversations = [...liveConversations, ...mockConversations];
   const messagesMap = { ...mockMessagesMap, ...liveMessagesMap };
+
+  // Parse lastActivity to minutes for sorting
+  const parseActivityToMin = (activity: string): number => {
+    const num = parseInt(activity) || 0;
+    if (activity.includes("h")) return num * 60;
+    return num;
+  };
+
+  // Apply filters & sort
+  const conversations = allConversations
+    .filter((c) => {
+      if (filterUnread && c.unread === 0) return false;
+      if (filterFavorites && !favorites.has(c.id)) return false;
+      if (filterIA) {
+        const ctrl = humanControl[c.id] ?? c.controlledBy;
+        if (ctrl !== "ia") return false;
+      }
+      if (filterTag && c.tag !== filterTag) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const aMin = parseActivityToMin(a.lastActivity);
+      const bMin = parseActivityToMin(b.lastActivity);
+      return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
+    });
 
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
