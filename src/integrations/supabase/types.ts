@@ -640,9 +640,9 @@ export type Database = {
           account_id: string | null
           action: string
           agent_name: string
+          contact_name: string | null
           created_at: string
           id: string
-          contact_name: string | null
           interaction_type: string
           is_hot: boolean
           lead_name: string
@@ -652,7 +652,7 @@ export type Database = {
         Insert: {
           account_id?: string | null
           action: string
-          agent_name: string
+          agent_name?: string
           contact_name?: string | null
           created_at?: string
           id?: string
