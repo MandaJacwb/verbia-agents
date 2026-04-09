@@ -658,7 +658,12 @@ export default function Atendimento() {
           <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
             <div className="h-full flex flex-col bg-card/50">
               <div className="p-3 border-b border-border">
-                <Input placeholder="Buscar conversa..." className="h-8 text-sm bg-background" />
+                <Input
+                  placeholder="Buscar conversa..."
+                  className="h-8 text-sm bg-background"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
 
               {/* ── Smart Filters ────────────────────────────── */}
