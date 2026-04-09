@@ -427,9 +427,11 @@ export default function Atendimento() {
     return num;
   };
 
-  // Apply filters & sort
+  // Apply search, filters & sort
   const conversations = allConversations
     .filter((c) => {
+      // Search by name
+      if (searchTerm.trim() && !c.name.toLowerCase().includes(searchTerm.trim().toLowerCase())) return false;
       if (filterUnread && c.unread === 0) return false;
       if (filterFavorites && !favorites.has(c.id)) return false;
       if (filterIA) {
@@ -442,6 +444,7 @@ export default function Atendimento() {
     .sort((a, b) => {
       const aMin = parseActivityToMin(a.lastActivity);
       const bMin = parseActivityToMin(b.lastActivity);
+      // "recent" = smallest minutes first (most recent activity), "oldest" = largest minutes first
       return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
     });
 
