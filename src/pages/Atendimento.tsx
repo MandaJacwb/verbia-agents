@@ -348,6 +348,7 @@ export default function Atendimento() {
   const [contactsVersion, setContactsVersion] = useState(0);
 
   // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterFavorites, setFilterFavorites] = useState(false);
   const [filterIA, setFilterIA] = useState(false);
@@ -426,9 +427,11 @@ export default function Atendimento() {
     return num;
   };
 
-  // Apply filters & sort
+  // Apply search, filters & sort
   const conversations = allConversations
     .filter((c) => {
+      // Search by name
+      if (searchTerm.trim() && !c.name.toLowerCase().includes(searchTerm.trim().toLowerCase())) return false;
       if (filterUnread && c.unread === 0) return false;
       if (filterFavorites && !favorites.has(c.id)) return false;
       if (filterIA) {
@@ -441,6 +444,7 @@ export default function Atendimento() {
     .sort((a, b) => {
       const aMin = parseActivityToMin(a.lastActivity);
       const bMin = parseActivityToMin(b.lastActivity);
+      // "recent" = smallest minutes first (most recent activity), "oldest" = largest minutes first
       return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
     });
 
@@ -654,7 +658,12 @@ export default function Atendimento() {
           <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
             <div className="h-full flex flex-col bg-card/50">
               <div className="p-3 border-b border-border">
-                <Input placeholder="Buscar conversa..." className="h-8 text-sm bg-background" />
+                <Input
+                  placeholder="Buscar conversa..."
+                  className="h-8 text-sm bg-background"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
 
               {/* ── Smart Filters ────────────────────────────── */}
