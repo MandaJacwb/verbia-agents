@@ -348,6 +348,7 @@ export default function Atendimento() {
   const [contactsVersion, setContactsVersion] = useState(0);
 
   // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterFavorites, setFilterFavorites] = useState(false);
   const [filterIA, setFilterIA] = useState(false);
