@@ -99,12 +99,12 @@ interface Conversation {
 }
 
 const mockConversations: Conversation[] = [
-  { id: "1", name: "Lucas Mendes", initials: "LM", tag: "vendas", controlledBy: "ia", unread: 3, lastActivity: "2min" },
-  { id: "2", name: "Ana Oliveira", initials: "AO", tag: "suporte", controlledBy: "humano", unread: 0, lastActivity: "5min" },
-  { id: "3", name: "Carlos Silva", initials: "CS", tag: "mandaja", controlledBy: "ia", unread: 1, lastActivity: "12min" },
-  { id: "4", name: "Fernanda Costa", initials: "FC", tag: "estetica", controlledBy: "ia", unread: 5, lastActivity: "1min" },
-  { id: "5", name: "Roberto Lima", initials: "RL", tag: "vendas", controlledBy: "humano", unread: 0, lastActivity: "30min" },
-  { id: "6", name: "Juliana Rocha", initials: "JR", tag: "suporte", controlledBy: "ia", unread: 2, lastActivity: "8min" },
+  { id: "1", name: "Lucas Mendes", initials: "LM", tag: "vendas", controlledBy: "ia", unread: 3, lastActivity: "2min", activityMinutes: 2 },
+  { id: "2", name: "Ana Oliveira", initials: "AO", tag: "suporte", controlledBy: "humano", unread: 0, lastActivity: "5min", activityMinutes: 5 },
+  { id: "3", name: "Carlos Silva", initials: "CS", tag: "mandaja", controlledBy: "ia", unread: 1, lastActivity: "12min", activityMinutes: 12 },
+  { id: "4", name: "Fernanda Costa", initials: "FC", tag: "estetica", controlledBy: "ia", unread: 5, lastActivity: "1min", activityMinutes: 1 },
+  { id: "5", name: "Roberto Lima", initials: "RL", tag: "vendas", controlledBy: "humano", unread: 0, lastActivity: "30min", activityMinutes: 30 },
+  { id: "6", name: "Juliana Rocha", initials: "JR", tag: "suporte", controlledBy: "ia", unread: 2, lastActivity: "8min", activityMinutes: 8 },
 ];
 
 type MsgSender = "cliente" | "ia" | "humano";
