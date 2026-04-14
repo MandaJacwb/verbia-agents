@@ -95,6 +95,7 @@ interface Conversation {
   controlledBy: "ia" | "humano";
   unread: number;
   lastActivity: string;
+  activityMinutes: number;
 }
 
 const mockConversations: Conversation[] = [
