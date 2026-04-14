@@ -95,15 +95,16 @@ interface Conversation {
   controlledBy: "ia" | "humano";
   unread: number;
   lastActivity: string;
+  activityMinutes: number;
 }
 
 const mockConversations: Conversation[] = [
-  { id: "1", name: "Lucas Mendes", initials: "LM", tag: "vendas", controlledBy: "ia", unread: 3, lastActivity: "2min" },
-  { id: "2", name: "Ana Oliveira", initials: "AO", tag: "suporte", controlledBy: "humano", unread: 0, lastActivity: "5min" },
-  { id: "3", name: "Carlos Silva", initials: "CS", tag: "mandaja", controlledBy: "ia", unread: 1, lastActivity: "12min" },
-  { id: "4", name: "Fernanda Costa", initials: "FC", tag: "estetica", controlledBy: "ia", unread: 5, lastActivity: "1min" },
-  { id: "5", name: "Roberto Lima", initials: "RL", tag: "vendas", controlledBy: "humano", unread: 0, lastActivity: "30min" },
-  { id: "6", name: "Juliana Rocha", initials: "JR", tag: "suporte", controlledBy: "ia", unread: 2, lastActivity: "8min" },
+  { id: "1", name: "Lucas Mendes", initials: "LM", tag: "vendas", controlledBy: "ia", unread: 3, lastActivity: "2min", activityMinutes: 2 },
+  { id: "2", name: "Ana Oliveira", initials: "AO", tag: "suporte", controlledBy: "humano", unread: 0, lastActivity: "5min", activityMinutes: 5 },
+  { id: "3", name: "Carlos Silva", initials: "CS", tag: "mandaja", controlledBy: "ia", unread: 1, lastActivity: "12min", activityMinutes: 12 },
+  { id: "4", name: "Fernanda Costa", initials: "FC", tag: "estetica", controlledBy: "ia", unread: 5, lastActivity: "1min", activityMinutes: 1 },
+  { id: "5", name: "Roberto Lima", initials: "RL", tag: "vendas", controlledBy: "humano", unread: 0, lastActivity: "30min", activityMinutes: 30 },
+  { id: "6", name: "Juliana Rocha", initials: "JR", tag: "suporte", controlledBy: "ia", unread: 2, lastActivity: "8min", activityMinutes: 8 },
 ];
 
 type MsgSender = "cliente" | "ia" | "humano";
@@ -297,6 +298,7 @@ function buildLiveData(rows: InteractionRow[]): {
       controlledBy: "ia" as const,
       unread: groupRows.filter((r) => !r.is_hot).length > 0 ? 1 : 0,
       lastActivity,
+      activityMinutes: diffMin,
     };
   });
 
@@ -421,12 +423,6 @@ export default function Atendimento() {
   const messagesMap = { ...mockMessagesMap, ...liveMessagesMap };
 
   // Parse lastActivity to minutes for sorting
-  const parseActivityToMin = (activity: string): number => {
-    const num = parseInt(activity) || 0;
-    if (activity.includes("h")) return num * 60;
-    return num;
-  };
-
   // Apply search, filters & sort
   const conversations = allConversations
     .filter((c) => {
@@ -442,10 +438,10 @@ export default function Atendimento() {
       return true;
     })
     .sort((a, b) => {
-      const aMin = parseActivityToMin(a.lastActivity);
-      const bMin = parseActivityToMin(b.lastActivity);
-      // "recent" = smallest minutes first (most recent activity), "oldest" = largest minutes first
-      return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
+      // "recent" = smallest activityMinutes first (most recent), "oldest" = largest first
+      return sortOrder === "recent"
+        ? a.activityMinutes - b.activityMinutes
+        : b.activityMinutes - a.activityMinutes;
     });
 
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
