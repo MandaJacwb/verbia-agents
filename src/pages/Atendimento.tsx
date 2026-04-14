@@ -298,6 +298,7 @@ function buildLiveData(rows: InteractionRow[]): {
       controlledBy: "ia" as const,
       unread: groupRows.filter((r) => !r.is_hot).length > 0 ? 1 : 0,
       lastActivity,
+      activityMinutes: diffMin,
     };
   });
 
