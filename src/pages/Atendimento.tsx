@@ -423,12 +423,6 @@ export default function Atendimento() {
   const messagesMap = { ...mockMessagesMap, ...liveMessagesMap };
 
   // Parse lastActivity to minutes for sorting
-  const parseActivityToMin = (activity: string): number => {
-    const num = parseInt(activity) || 0;
-    if (activity.includes("h")) return num * 60;
-    return num;
-  };
-
   // Apply search, filters & sort
   const conversations = allConversations
     .filter((c) => {
@@ -444,10 +438,10 @@ export default function Atendimento() {
       return true;
     })
     .sort((a, b) => {
-      const aMin = parseActivityToMin(a.lastActivity);
-      const bMin = parseActivityToMin(b.lastActivity);
-      // "recent" = smallest minutes first (most recent activity), "oldest" = largest minutes first
-      return sortOrder === "recent" ? aMin - bMin : bMin - aMin;
+      // "recent" = smallest activityMinutes first (most recent), "oldest" = largest first
+      return sortOrder === "recent"
+        ? a.activityMinutes - b.activityMinutes
+        : b.activityMinutes - a.activityMinutes;
     });
 
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
