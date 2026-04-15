@@ -507,6 +507,7 @@ export default function Atendimento() {
       }
       // Also persist to Supabase so it survives refresh
       await supabase.from("interactions").insert({
+        interaction_type: "whatsapp_message",
         phone_number: selectedPhone,
         message_content: text,
         lead_name: selected.name,
