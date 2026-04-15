@@ -466,19 +466,12 @@ export default function Atendimento() {
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
 
-  // Auto-scroll to bottom when messages change or conversation switches.
-  // scrollIntoView doesn't work inside Radix ScrollArea — we must find the
-  // actual scrollable viewport via its data attribute and set scrollTop directly.
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Auto-scroll: we use a ref directly on the scrollable div so we can set
+  // scrollTop without any Radix viewport indirection.
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = messagesEndRef.current;
-    if (!el) return;
-    const viewport = el.closest<HTMLElement>("[data-radix-scroll-area-viewport]");
-    if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
-    } else {
-      // Fallback for environments where Radix isn't wrapping
-      el.scrollIntoView({ behavior: "smooth" });
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [messages.length, selectedId]);
   const memory = memoryMap[selectedId] ?? defaultMemory;
@@ -919,8 +912,8 @@ export default function Atendimento() {
                 </div>
               </div>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              {/* Messages — plain div with ref for reliable auto-scroll */}
+              <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-3">
                   {messages.map((msg) => {
                     const cfg = senderConfig[msg.sender];
@@ -953,9 +946,8 @@ export default function Atendimento() {
                       </div>
                     );
                   })}
-                  <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Footer with Tabs */}
               <div className="border-t border-border bg-card/50">

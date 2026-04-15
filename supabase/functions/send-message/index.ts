@@ -3,9 +3,30 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const N8N_WEBHOOK_URL =
   Deno.env.get("N8N_SEND_MESSAGE_WEBHOOK_URL") ||
-  "https://cleveralpaca-n8n.cloudfy.live/webhook/verbia-send-whatsapp";
+  "https://cleveralpaca-n8n.cloudfy.live/webhook/verbia-send-message";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+/** Call N8N webhook with automatic retry on 404 (container cold-start). */
+async function callN8N(body: string, maxAttempts = 3): Promise<Response> {
+  const options: RequestInit = {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  };
+  let last: Response | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    last = await fetch(N8N_WEBHOOK_URL, options);
+    if (last.ok) return last;
+    // Only retry on 404 (webhook not registered yet) or 503 (N8N starting)
+    if (last.status !== 404 && last.status !== 503) break;
+    if (attempt < maxAttempts) {
+      // Wait 1.5 s then retry — gives N8N time to finish registering webhooks
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+  return last!;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,24 +66,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. Forward to N8N (which sends via Evolution API)
-    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone,
-        message,
-        conversation_id,
-        sent_by: user.id,
-      }),
-    });
+    // 3. Forward to N8N (which sends via Evolution API), with retry on 404/503
+    const payload = JSON.stringify({ phone, message, conversation_id, sent_by: user.id });
+    const n8nResponse = await callN8N(payload);
 
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text();
-      return new Response(JSON.stringify({ error: "Failed to send message", details: errorText }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error(`[send-message] N8N returned ${n8nResponse.status}:`, errorText);
+      return new Response(
+        JSON.stringify({ error: "Failed to send message", details: errorText, status: n8nResponse.status }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const result = await n8nResponse.json().catch(() => ({}));
