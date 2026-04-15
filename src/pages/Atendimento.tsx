@@ -466,10 +466,20 @@ export default function Atendimento() {
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0];
   const messages = messagesMap[selectedId] ?? defaultMessages;
 
-  // Auto-scroll to bottom when messages change or conversation switches
+  // Auto-scroll to bottom when messages change or conversation switches.
+  // scrollIntoView doesn't work inside Radix ScrollArea — we must find the
+  // actual scrollable viewport via its data attribute and set scrollTop directly.
   const messagesEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesEndRef.current;
+    if (!el) return;
+    const viewport = el.closest<HTMLElement>("[data-radix-scroll-area-viewport]");
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+    } else {
+      // Fallback for environments where Radix isn't wrapping
+      el.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages.length, selectedId]);
   const memory = memoryMap[selectedId] ?? defaultMemory;
   const isHuman = humanControl[selectedId] ?? selected.controlledBy === "humano";
