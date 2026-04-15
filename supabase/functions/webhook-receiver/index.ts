@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Validate webhook secret (if configured)
+    // 1. Validate webhook secret
     if (WEBHOOK_SECRET) {
       const providedSecret = req.headers.get("x-webhook-secret");
       if (providedSecret !== WEBHOOK_SECRET) {
@@ -32,65 +32,36 @@ Deno.serve(async (req) => {
       message_text,
       message_id,
       timestamp,
-      account_id,
-      conversation_id,
       raw_data,
     } = body;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 3. Upsert contact if sender info is available
-    if (sender && account_id) {
-      await supabase.from("contacts").upsert(
-        {
-          phone: sender,
-          name: sender_name || sender,
-          account_id,
-          channel: "whatsapp",
-        },
-        { onConflict: "phone,account_id" }
-      );
-    }
-
-    // 4. Create or update conversation
-    if (conversation_id && account_id) {
-      await supabase.from("conversations").upsert(
-        {
-          id: conversation_id,
-          account_id,
-          contact_phone: sender,
-          channel: "whatsapp",
-          status: "open",
-          last_message_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      );
-    }
-
-    // 5. Insert message
-    if (message_text && conversation_id) {
-      await supabase.from("messages").insert({
-        conversation_id,
-        account_id,
-        role: "user",
-        content: message_text,
-        external_id: message_id,
-      });
-    }
-
-    // 6. Insert interaction for dashboard
-    await supabase.from("interactions").insert({
+    // 3. Insert interaction — this is what the Centro de Atendimento reads in real-time
+    const { error: interactionError } = await supabase.from("interactions").insert({
       interaction_type: "whatsapp_message",
       action: event || "message_received",
       lead_name: sender_name || sender || "Unknown",
       agent_name: instance || "VerbIA",
+      phone_number: sender || null,
+      message_content: message_text || null,
+      contact_name: sender_name || sender || null,
     });
+
+    if (interactionError) {
+      console.error("[webhook-receiver] interactions insert error:", interactionError);
+      return new Response(JSON.stringify({ error: "Failed to insert interaction", details: interactionError }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    console.error("[webhook-receiver] unexpected error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
