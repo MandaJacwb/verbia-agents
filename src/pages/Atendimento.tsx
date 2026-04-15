@@ -282,8 +282,16 @@ function buildLiveData(rows: InteractionRow[]): {
   }
 
   const conversations: Conversation[] = Object.entries(groups).map(([key, groupRows]) => {
-    const latest = groupRows[groupRows.length - 1];
-    const name = latest.contact_name || latest.lead_name || key;
+    // Always sort by created_at so "latest" is truly the newest
+    const sorted = [...groupRows].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const latest = sorted[sorted.length - 1];
+    // Prefer a real name over a phone-number-like string
+    const rawName = latest.contact_name || latest.lead_name || key;
+    const nameIsPhone = /^\+?\d[\d\s()\-]{5,}$/.test(rawName.replace(/\s/g, "")) ||
+      rawName.includes("@s.whatsapp.net");
+    const name = nameIsPhone ? key : rawName;
     const initials = name
       .split(" ")
       .slice(0, 2)
@@ -305,7 +313,11 @@ function buildLiveData(rows: InteractionRow[]): {
 
   const messagesMap: Record<string, Message[]> = {};
   for (const [key, groupRows] of Object.entries(groups)) {
-    messagesMap[`live-${key}`] = groupRows.map((row) => ({
+    // Sort messages chronologically (oldest first → displayed at top, newest at bottom)
+    const sorted = [...groupRows].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    messagesMap[`live-${key}`] = sorted.map((row) => ({
       id: row.id,
       sender: (
         row.action === "message_sent"
