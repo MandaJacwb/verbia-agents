@@ -535,27 +535,19 @@ export default function Atendimento() {
     setLiveRows((prev) => [...prev, tempMsg]);
     setMsgInput("");
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-message`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ phone: selectedPhone, message: text }),
-        }
-      );
+      // Send via N8N webhook directly (bypasses edge function for reliability)
+      const n8nUrl = "https://cleveralpaca-n8n.cloudfy.live/webhook/verbia-send-message";
+      const phoneClean = (selectedPhone || "").replace(/^\+/, "");
+      const res = await fetch(n8nUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneClean, message: text }),
+      });
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody?.error || `Falha ao enviar (${res.status})`);
+        const errText = await res.text().catch(() => "");
+        throw new Error(`Falha ao enviar WhatsApp (${res.status}): ${errText}`);
       }
-      // Also persist to Supabase so it survives refresh
+      // Persist to Supabase so it survives refresh
       await supabase.from("interactions").insert({
         interaction_type: "whatsapp_message",
         phone_number: selectedPhone,
