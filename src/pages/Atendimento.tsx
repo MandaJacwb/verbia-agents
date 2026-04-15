@@ -417,9 +417,13 @@ export default function Atendimento() {
 
   // Fetch interactions from Supabase + subscribe to realtime inserts
   useEffect(() => {
+    // Fetch only the last 7 days of interactions to avoid hitting Supabase's
+    // default 1000-row limit — older rows would push recent messages out.
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const query = supabase
       .from("interactions")
       .select("*")
+      .gte("created_at", since)
       .order("created_at", { ascending: true });
 
     query.then(({ data, error }) => {
