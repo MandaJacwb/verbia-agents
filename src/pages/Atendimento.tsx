@@ -485,10 +485,26 @@ export default function Atendimento() {
     setLiveRows((prev) => [...prev, tempMsg]);
     setMsgInput("");
     try {
-      const { error } = await supabase.functions.invoke("send-message", {
-        body: { phone: selectedPhone, message: text },
-      });
-      if (error) throw error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-message`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ phone: selectedPhone, message: text }),
+        }
+      );
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody?.error || `Falha ao enviar (${res.status})`);
+      }
       // Also persist to Supabase so it survives refresh
       await supabase.from("interactions").insert({
         phone_number: selectedPhone,
