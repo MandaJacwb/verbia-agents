@@ -58,6 +58,7 @@ import {
 } from "@/lib/outcomeStore";
 import {
   findContactByName,
+  findContactByPhone,
   addContact,
   updateContact,
   subscribe as subscribeContacts,
@@ -306,7 +307,13 @@ function buildLiveData(rows: InteractionRow[]): {
   for (const [key, groupRows] of Object.entries(groups)) {
     messagesMap[`live-${key}`] = groupRows.map((row) => ({
       id: row.id,
-      sender: (row.action === "message_sent" ? (row.agent_name === "ia" ? "ia" : "humano") : "cliente") as MsgSender,
+      sender: (
+        row.action === "message_sent"
+          ? row.agent_name === "ia" ? "ia" : "humano"
+          : row.action === "bot_response" || row.agent_name === "VerbIA"
+            ? "ia"
+            : "cliente"
+      ) as MsgSender,
       text: row.message_content || row.action,
       time: new Date(row.created_at).toLocaleTimeString("pt-BR", {
         hour: "2-digit",
@@ -527,8 +534,10 @@ export default function Atendimento() {
     }
   };
 
-  // Smart Recognition: find linked contact by name
-  const linkedContact = findContactByName(selected.name);
+  // Smart Recognition: find linked contact by name or phone
+  const linkedContact =
+    findContactByName(selected.name) ??
+    (selectedPhone ? findContactByPhone(selectedPhone) : undefined);
 
   // Open contact edit dialog
   const openContactEditor = () => {
@@ -545,9 +554,12 @@ export default function Atendimento() {
       });
     } else {
       setLinkedContactId(null);
+      // If selected.name looks like a phone number, pre-fill phone field instead of name
+      const nameIsPhone = /^\+?\d[\d\s()\-]{5,}$/.test(selected.name.replace(/\s/g, "")) ||
+        selected.name.includes("@s.whatsapp.net");
       setContactForm({
-        name: selected.name,
-        phone: "",
+        name: nameIsPhone ? "" : selected.name,
+        phone: nameIsPhone ? selected.name.replace("@s.whatsapp.net", "") : (selectedPhone || ""),
         empresa: "",
         email: "",
         redesSociais: "",
@@ -747,6 +759,13 @@ export default function Atendimento() {
                     const active = conv.id === selectedId;
                     const isCtrlHuman = humanControl[conv.id] ?? conv.controlledBy === "humano";
                     const isFav = favorites.has(conv.id);
+                    // Resolve display name: prefer saved contact name over raw phone/lead_name
+                    const convPhone = conv.id.startsWith("live-") ? conv.id.replace("live-", "") : null;
+                    const convContact = findContactByName(conv.name) ?? (convPhone ? findContactByPhone(convPhone) : undefined);
+                    const displayName = convContact?.name || conv.name;
+                    const displayInitials = convContact
+                      ? convContact.name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("")
+                      : conv.initials;
                     return (
                       <button
                         key={conv.id}
@@ -759,12 +778,12 @@ export default function Atendimento() {
                       >
                         <Avatar className="h-9 w-9 shrink-0">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                            {conv.initials}
+                            {displayInitials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
-                            <span className="text-sm font-medium text-foreground truncate">{conv.name}</span>
+                            <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
                             <span className="text-[10px] text-muted-foreground shrink-0">{conv.lastActivity}</span>
                           </div>
                           <div className="flex items-center gap-1.5 mt-1">
@@ -822,7 +841,7 @@ export default function Atendimento() {
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{selected.name}</p>
+                      <p className="text-sm font-medium text-foreground">{linkedContact?.name || selected.name}</p>
                       {linkedContact?.empresa && (
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-chart-2/15 text-chart-2 border-chart-2/30">
                           <Building2 className="h-2.5 w-2.5 mr-0.5" />
