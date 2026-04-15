@@ -317,7 +317,31 @@ function buildLiveData(rows: InteractionRow[]): {
     const sorted = [...groupRows].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-    messagesMap[`live-${key}`] = sorted.map((row) => ({
+
+    // Remove fromMe echoes: Evolution API fires a "message_received" webhook for every
+    // message the bot sends (fromMe). That creates a duplicate "cliente" bubble for the
+    // bot's own message. Filter it out: if a message_received row has the same content
+    // as a bot_response within 120 s and the bot_response came first, it's an echo.
+    const botResponseContents = new Set(
+      sorted
+        .filter((r) => r.action === "bot_response")
+        .map((r) => r.message_content?.trim())
+    );
+    const deduped = sorted.filter((row) => {
+      if (row.action !== "message_received") return true;
+      const content = row.message_content?.trim();
+      if (!content || !botResponseContents.has(content)) return true;
+      // Confirm there's a bot_response with the same content that came before this row
+      const echoOf = sorted.find(
+        (other) =>
+          other.action === "bot_response" &&
+          other.message_content?.trim() === content &&
+          new Date(other.created_at).getTime() <= new Date(row.created_at).getTime() + 120_000
+      );
+      return !echoOf; // keep if no matching bot_response found
+    });
+
+    messagesMap[`live-${key}`] = deduped.map((row) => ({
       id: row.id,
       sender: (
         row.action === "message_sent"
